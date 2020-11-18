@@ -98,8 +98,15 @@ data = unnest(path_df,data) %>%
     select(-"file",-"data") 
 
 data
+data%>%
+  pivot_longer(
+    week_1:week_8,
+    names_to = "week",
+    values_to = "value"
+  )%>%
+  ggplot(aes(x=week, y=value, group=ID, color=ID))+ geom_line() +facet_wrap("arm")
 ````
 
-
+Based on the spaghetti plot above, case and control group show different trend.
 
 
