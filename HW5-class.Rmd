@@ -41,7 +41,9 @@ aggregate_df =
   summarise(
     hom_total = n(),
     hom_unsolved = sum(resolved == "unsolved")
-  )
+  ) %>%
+  filter(city_state !="Tulso_AL")
+  
 
 ```
 
@@ -59,7 +61,7 @@ prop.test(
 
 Try to iterate...
 
-
+```{r}
 aggregate_df %>%
   mutate(
     prop_tests=map2(.x=hom_unsolved, .y=hom_total, ~prop.test(x=.x, n=.y)),
@@ -69,9 +71,9 @@ aggregate_df %>%
   unnest(tidy_tests) %>%
   select(city_state, estimate, conf.low, conf.high)
 
+```
 
-
-## Problem 2 ideas....
+## Problem 2 
 Make a spaghetti plot showing observations on each subject over time, and comment on differences between groups.
 
 ```{r}
@@ -104,12 +106,14 @@ data%>%
     names_to = "week",
     values_to = "value"
   )%>%
-  ggplot(aes(x=week, y=value, group=ID, color=ID))+ geom_line() +facet_wrap("arm")
-````
+  ggplot(aes(x=week, y=value, group=ID, color=ID))+ geom_line() +facet_wrap("arm") +
+  theme_light()
+```
 
 Based on the spaghetti plot above, case and control group show different trend.
+The subjects in experiment group show noticeable increase as weeks go by. In contrast, for control group, even though the value move around as weeks go by there is no clear trend/tendency. 
 
-## 3 Problem 3
+## Problem 3
 
 * Make a t-test function 
 
@@ -149,7 +153,7 @@ list(
 output = vector("list", length = 6)
 
 for (i in 1:6) {
-output[[i]] = rerun(5, sample_ttest(mu = mu[[i]])) %>% 
+output[[i]] = rerun(5000, sample_ttest(mu = mu[[i]])) %>% 
   bind_rows() %>% 
   select(estimate, p.value) %>%
   mutate(mu=mu[[i]])
@@ -161,6 +165,8 @@ output = bind_rows(output) %>%
   p.value < .05 ~ "reject",
   p.value >= .05 ~ "fail to reject"
   ))
+
+glimpse(output)
 ```
 
 * Make a plot showing the proportion of times the null was rejected (the power of the test) on the y axis and the true value of μ on the x axis. Describe the association between effect size and power.
@@ -171,7 +177,7 @@ output %>%
   group_by(mu)%>%
   filter(test_results=="reject") %>%
   count(test_results) %>%
-  mutate(power=n/5)%>%
+  mutate(power=n/5000)%>%
   ggplot(aes(x=mu, y=power)) + geom_line() +
   labs(title = "Association between effect size and power") +
   scale_x_continuous(breaks=c(1,2,3,4,5,6)) +
@@ -181,7 +187,7 @@ output %>%
 ```
 
 * Make a plot showing the average estimate of μ̂  on the y axis and the true value of μ on the x axis. Make a second plot (or overlay on the first) the average estimate of μ̂  only in samples for which the null was rejected on the y axis and the true value of μ on the x axis. Is the sample average of μ̂  across tests for which the null is rejected approximately equal to the true value of μ? Why or why not?
-* Yes, the average of mu_hat across tests where the null hypothesis was rejected is approximately equal to the true value of mu. The green line in the second plot is y=x line as a reference. When we comparing the average mu_hat vs. mu, there are comparable. 
+* Yes, the average of mu_hat across tests where the null hypothesis was rejected is approximately equal to the true value of mu. The green line in the second plot is y=x line as a reference. When we comparing the average mu_hat vs. mu, there are comparable. The proximity gets high as the effect size gets greater. 
 
 ```{r}
 output %>%
